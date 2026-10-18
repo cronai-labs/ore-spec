@@ -6,6 +6,8 @@ config:
   # The spec repeats subsection names (Fields, Examples) under different parents.
   MD024:
     siblings_only: true
+  # Table pipe spacing is not enforced: tables use the compact |---| separators.
+  MD060: false
   # Examples are workflow notes: they start with front matter, not a heading.
   MD041: false
 globs:
