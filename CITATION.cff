@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use or implement this specification, please cite it as below."
+type: software
+title: "The Ore Format"
+abstract: "Ore is a format for executable notes: Markdown files whose front matter says ore: true and whose ore:<kind> cells run in dependency order and write their outputs back into the note, within permissions the note declares."
+authors:
+  - family-names: "Krug"
+    given-names: "Tobias"
+    affiliation: "CronAI UG (haftungsbeschränkt)"
+version: "0.1.0"
+date-released: "2026-10-18"
+license: "CC-BY-4.0"
+repository-code: "https://github.com/cronai-labs/ore-spec"
+url: "https://github.com/cronai-labs/ore-spec"
+keywords:
+  - ore
+  - markdown
+  - executable notes
+  - workflow
+  - obsidian
+  - specification
