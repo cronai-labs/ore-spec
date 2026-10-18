@@ -1,0 +1,60 @@
+# git-cliff configuration: CHANGELOG.md and the release notes are generated
+# from Conventional Commits.
+
+[changelog]
+header = """
+# Changelog
+
+All notable changes to the Ore format specification are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+"""
+body = """
+{% if version -%}
+## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else -%}
+## [Unreleased]
+{% endif %}
+{%- for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim | upper_first }}
+{% for commit in commits %}
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message | upper_first }}\
+{% endfor %}
+{% endfor %}
+"""
+footer = ""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+filter_commits = true
+split_commits = false
+protect_breaking_commits = true
+tag_pattern = "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+topo_order = false
+sort_commits = "oldest"
+
+commit_preprocessors = [
+  # Link the "(#N)" GitHub appends to a squash subject. (?m): the subject is the
+  # first line of a longer message. A TOML literal string: single backslashes.
+  { pattern = '(?m)\s+\(#([0-9]+)\)$', replace = " ([#${1}](https://github.com/cronai-labs/ore-spec/pull/${1}))" },
+]
+
+commit_parsers = [
+  # The <!-- n --> prefixes only order the sections; striptags removes them.
+  { message = "^feat", group = "<!-- 0 -->Added" },
+  { message = "^fix", group = "<!-- 1 -->Fixed" },
+  { message = "^docs\\(spec\\)", group = "<!-- 2 -->Specification" },
+  { message = "^docs\\(examples\\)", group = "<!-- 3 -->Examples" },
+  { message = "^revert", group = "<!-- 4 -->Reverted" },
+  { message = "^docs", skip = true },
+  { message = "^style", skip = true },
+  { message = "^refactor", skip = true },
+  { message = "^test", skip = true },
+  { message = "^build", skip = true },
+  { message = "^ci", skip = true },
+  { message = "^chore", skip = true },
+]
+
+[bump]
+initial_tag = "v0.1.0"

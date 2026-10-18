@@ -1,0 +1,90 @@
+name: Release
+
+# A pushed tag vX.Y.Z publishes that version of the specification as an
+# immutable GitHub release, with SPEC.md attached and attested. The tag must be
+# on main, its commit must have passed ci-required, SPEC.md must state the same
+# version, and CHANGELOG.md must have its section (the release notes).
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write     # create the release
+      id-token: write     # the Sigstore certificate for the attestation
+      attestations: write # store the attestation
+      checks: read        # ci-required on the tagged commit
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Gate
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse "$TAG^{commit}")"
+          git merge-base --is-ancestor "$sha" origin/main \
+            || { echo "::error::$TAG ($sha) is not on main."; exit 1; }
+          version="${TAG#v}"
+          grep -qE "^\*\*Version:\*\* ${version//./\\.}( |$)" SPEC.md \
+            || { echo "::error::SPEC.md does not state version $version."; exit 1; }
+          grep -qE "^## \[${version//./\\.}\]" CHANGELOG.md \
+            || { echo "::error::CHANGELOG.md has no section for $version."; exit 1; }
+          conclusion="$(gh api "repos/$GH_REPO/commits/$sha/check-runs?check_name=ci-required" \
+            --jq '[.check_runs[] | .conclusion] | if length == 0 then "none" else (if all(. == "success") then "success" else "failure" end) end')"
+          [ "$conclusion" = success ] \
+            || { echo "::error::ci-required on $sha is '$conclusion', not success."; exit 1; }
+          echo "ok: $TAG at $sha, on main, ci-required green, SPEC.md and CHANGELOG.md at $version"
+
+      - name: Release notes from CHANGELOG.md
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          awk -v v="$version" '
+            $0 ~ "^## \\[" v "\\]" { on = 1; next }
+            on && /^## \[/ { exit }
+            on { print }
+          ' CHANGELOG.md > release-notes.md
+          [ -s release-notes.md ] || { echo "::error::The $version section of CHANGELOG.md is empty."; exit 1; }
+          cat release-notes.md
+
+      - name: Attest SPEC.md
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: SPEC.md
+
+      - name: Publish and read back
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" --verify-tag --title "Ore ${TAG}" --notes-file release-notes.md SPEC.md
+          # Read back what was published rather than trusting the create call.
+          # The release is fetched by tag: it is published, so no list lookup.
+          for _ in $(seq 1 10); do
+            release="$(gh api "repos/$GH_REPO/releases/tags/$TAG" 2>/dev/null || true)"
+            [ -n "$release" ] && break
+            sleep 3
+          done
+          [ -n "$release" ] || { echo "::error::Release $TAG not found after creating it."; exit 1; }
+          built="sha256:$(sha256sum SPEC.md | cut -d' ' -f1)"
+          uploaded="$(jq -r '[.assets[] | select(.name == "SPEC.md") | .digest // "no digest"] | first // "missing"' <<<"$release")"
+          jq -r '"published \(.tag_name): draft=\(.draft) immutable=\(.immutable) \(.html_url)"' <<<"$release"
+          echo "SPEC.md: uploaded $uploaded, built $built"
+          [ "$(jq -r '.draft' <<<"$release")" = false ] || { echo "::error::$TAG is still a draft."; exit 1; }
+          [ "$(jq -r '.immutable' <<<"$release")" = true ] || { echo "::error::$TAG is not immutable; check the repository's immutable releases setting."; exit 1; }
+          [ "$uploaded" = "$built" ] || { echo "::error::The uploaded SPEC.md does not match the tagged one."; exit 1; }
