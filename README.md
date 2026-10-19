@@ -2,7 +2,7 @@
 
 **Ore** is a format for executable notes: Markdown files whose cells run, in order, and write their results back into the note. A workflow is a note with `ore: true` in its front matter and fenced code blocks of type `ore:ts`, `ore:shell` or `ore:ai`. The note declares what its cells may do, so you can read the permissions before anything runs.
 
-This repository holds the specification: **[SPEC.md](SPEC.md)**, version 0.1.1 (draft).
+This repository holds the specification: **[SPEC.md](SPEC.md)**, version 0.1.1 (draft). An overview for readers new to Ore: [cronai.de/en/ore](https://www.cronai.de/en/ore).
 
 ## In one example
 
@@ -49,6 +49,13 @@ Ore was created by Tobias Krug at CronAI UG. The format was first published on 2
 | Runner | Kind | Status |
 |---|---|---|
 | [VaultOre](https://github.com/cronai-labs/vaultore) | Obsidian plugin, and a command-line runner built from source | Reference implementation of 0.1, in [Obsidian's community plugins](https://community.obsidian.md/plugins/vaultore). Known deviations: [SPEC.md Appendix B](SPEC.md#appendix-b-reference-implementation) |
+
+## For agents and tool builders
+
+- **Writing workflows:** the skill [writing-ore-workflows](skills/writing-ore-workflows/SKILL.md) is the specification's short form for authors, with the rules that catch most mistakes.
+- **Building a tool:** the skill [implementing-ore](skills/implementing-ore/SKILL.md) maps the conformance items (§11) and the rules that are easy to get wrong, for a runner, a linter, an editor plugin or a converter.
+- Both are [Agent Skills](https://agentskills.io): copy a folder from `skills/` into your agent's skills directory (Claude Code: `~/.claude/skills/`).
+- [llms.txt](llms.txt) lists these files for language models. Agents changing the specification itself read [AGENTS.md](AGENTS.md).
 
 ## Licence and citation
 

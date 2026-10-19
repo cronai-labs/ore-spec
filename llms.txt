@@ -1,0 +1,24 @@
+# Ore
+
+> Ore is a format for executable notes: a Markdown note with `ore: true` in its front matter whose fenced code blocks of type `ore:ts`, `ore:shell` or `ore:ai` are cells. A runner executes them in dependency order, enforces the permissions the note declares (network, reading and writing the vault) and writes each output back under its cell. Specification version 0.1.1 (draft), CC BY 4.0. Reference implementation: VaultOre.
+
+## Specification
+
+- [SPEC.md](https://raw.githubusercontent.com/cronai-labs/ore-spec/main/SPEC.md): the normative specification
+- [Releases](https://github.com/cronai-labs/ore-spec/releases): each version as an immutable, attested copy of SPEC.md
+
+## Skills
+
+- [writing-ore-workflows](https://raw.githubusercontent.com/cronai-labs/ore-spec/main/skills/writing-ore-workflows/SKILL.md): how to write an Ore workflow, and the rules that catch most mistakes
+- [implementing-ore](https://raw.githubusercontent.com/cronai-labs/ore-spec/main/skills/implementing-ore/SKILL.md): how to build a runner or another tool against the specification
+
+## Examples
+
+- [hello.md](https://raw.githubusercontent.com/cronai-labs/ore-spec/main/examples/hello.md): two TypeScript cells, the second reading the first
+- [summarise-a-note.md](https://raw.githubusercontent.com/cronai-labs/ore-spec/main/examples/summarise-a-note.md): an AI cell that summarises a note, and a TypeScript cell that turns the summary into a checklist
+
+## Optional
+
+- [README.md](https://raw.githubusercontent.com/cronai-labs/ore-spec/main/README.md): overview, implementations, licence and citation
+- [AGENTS.md](https://raw.githubusercontent.com/cronai-labs/ore-spec/main/AGENTS.md): instructions for agents changing the specification
+- [VaultOre](https://github.com/cronai-labs/vaultore): the reference implementation
