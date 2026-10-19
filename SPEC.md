@@ -356,4 +356,4 @@ value        = '"' { anyButDoubleQuote } '"'
 
 Known deviations of VaultOre from this version:
 
-- Up to VaultOre 0.1.2, a `ore:ts` cell whose last statement is a string literal before any other statement (a directive, such as a cell that is only `"text";`) outputs `undefined` instead of the string (§7.1; [vaultore#158](https://github.com/cronai-labs/vaultore/issues/158)). VaultOre's `main` branch fixes it ([vaultore#159](https://github.com/cronai-labs/vaultore/pull/159)), and the release after 0.1.2 will carry the fix.
+- Up to VaultOre 0.1.2, a `ore:ts` cell whose last statement is a string literal before any other statement (a directive, such as a cell that is only `"text";`) outputs `undefined` instead of the string (§7.1; [vaultore#158](https://github.com/cronai-labs/vaultore/issues/158)). [VaultOre 0.1.3](https://github.com/cronai-labs/vaultore/releases/tag/0.1.3) fixes it.
