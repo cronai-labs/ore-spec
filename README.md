@@ -2,7 +2,7 @@
 
 **Ore** is a format for executable notes: Markdown files whose cells run, in order, and write their results back into the note. A workflow is a note with `ore: true` in its front matter and fenced code blocks of type `ore:ts`, `ore:shell` or `ore:ai`. The note declares what its cells may do, so you can read the permissions before anything runs.
 
-This repository holds the specification: **[SPEC.md](SPEC.md)**, version 0.1.0 (draft).
+This repository holds the specification: **[SPEC.md](SPEC.md)**, version 0.1.1 (draft).
 
 ## In one example
 
@@ -38,7 +38,7 @@ A runner executes `greeting`, then `shout`, and writes each output below its cel
 
 ## Status
 
-Version 0.1.0 is a draft. It describes the format as [VaultOre](https://github.com/cronai-labs/vaultore) 0.1.x, the reference implementation, reads and runs it. Before 1.0 the format may change incompatibly; [SPEC.md §11](SPEC.md#11-versioning-and-conformance) says what 1.0 requires. Changes are listed in `CHANGELOG.md` from the first release on.
+Version 0.1.1 is a draft. It describes the format as [VaultOre](https://github.com/cronai-labs/vaultore) 0.1.x, the reference implementation, reads and runs it. Before 1.0 the format may change incompatibly; [SPEC.md §11](SPEC.md#11-versioning-and-conformance) says what 1.0 requires. Changes are listed in `CHANGELOG.md` from the first release on.
 
 ## Origin
 
@@ -54,7 +54,7 @@ Ore was created by Tobias Krug at CronAI UG. The format was first published on 2
 
 The specification is licensed under [Creative Commons Attribution 4.0 International](LICENSE) (CC BY 4.0): you may share and adapt it, including for commercial use and for implementations, as long as you give credit. Cite it as given in [CITATION.cff](CITATION.cff), or as:
 
-> Tobias Krug, CronAI UG. *The Ore Format*, version 0.1.0 (draft), 2026. <https://github.com/cronai-labs/ore-spec>
+> Tobias Krug, CronAI UG. *The Ore Format*, version 0.1.1 (draft), 2026. <https://github.com/cronai-labs/ore-spec>
 
 ## Contributing
 
