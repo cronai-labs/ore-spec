@@ -354,6 +354,6 @@ value        = '"' { anyButDoubleQuote } '"'
 
 [VaultOre](https://github.com/cronai-labs/vaultore) implements this version: an Obsidian plugin and a command-line runner, in [Obsidian's community plugins](https://community.obsidian.md/plugins/vaultore) since 2026-10-18. Its own specifications go into detail this document leaves to runners: the container flags, the stored permission decisions, the providers' request formats.
 
-Known deviations of VaultOre 0.1.x from this version:
+Known deviations of VaultOre from this version:
 
-- A `ore:ts` cell whose last statement is a string literal before any other statement (a directive, such as a cell that is only `"text";`) outputs `undefined` instead of the string (§7.1; [vaultore#158](https://github.com/cronai-labs/vaultore/issues/158)).
+- Up to VaultOre 0.1.2, a `ore:ts` cell whose last statement is a string literal before any other statement (a directive, such as a cell that is only `"text";`) outputs `undefined` instead of the string (§7.1; [vaultore#158](https://github.com/cronai-labs/vaultore/issues/158)). VaultOre's `main` branch fixes it ([vaultore#159](https://github.com/cronai-labs/vaultore/pull/159)), and the release after 0.1.2 will carry the fix.
