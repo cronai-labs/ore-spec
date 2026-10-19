@@ -1,10 +1,10 @@
 # The Ore Format
 
-**Version:** 0.1.0
+**Version:** 0.1.1
 
 **Status:** Draft
 
-**Date:** 2026-10-18
+**Date:** 2026-10-19
 
 **Editor:** Tobias Krug, CronAI UG
 
