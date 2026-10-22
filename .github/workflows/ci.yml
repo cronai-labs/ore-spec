@@ -8,6 +8,8 @@ on:
     # `edited`: the policy job lints the PR title and body. `ready_for_review`:
     # the checklist step is skipped while the PR is a draft.
     types: [opened, synchronize, reopened, edited, ready_for_review]
+  # A merge queue, if the ruleset turns one on, needs ci-required on its group.
+  merge_group:
   workflow_dispatch:
 
 # CI only reads the repository.
@@ -79,6 +81,18 @@ jobs:
           fi
           echo "ok: no unticked checkboxes"
 
+      - name: Actions are pinned to a full commit SHA
+        run: |
+          unpinned="$(grep -rnE '^[[:space:]]*(-[[:space:]]+)?uses:' .github/workflows \
+            | grep -vE 'uses:[[:space:]]*\./' \
+            | grep -vE '@[0-9a-f]{40}([[:space:]]|$)' || true)"
+          if [ -n "$unpinned" ]; then
+            echo "::error::Actions must be pinned to a 40-character commit SHA:"
+            echo "$unpinned"
+            exit 1
+          fi
+          echo "ok: every uses: is SHA-pinned"
+
   commitlint:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -130,11 +144,33 @@ jobs:
           args: --offline --no-progress --include-fragments --exclude-path node_modules './**/*.md'
           fail: true
 
+  # Secret scan only: the dependency audit waits for #20.
+  security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GITLEAKS_VERSION: 8.30.1
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install gitleaks (checksum-verified)
+        run: |
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSLo "$RUNNER_TEMP/$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$archive" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" gitleaks
+      - name: Secret scan (full history)
+        run: '"$RUNNER_TEMP/gitleaks" git --no-banner --redact --verbose .'
+
   # The one required check. Green only if every job above succeeded: failure,
   # cancelled and skipped all fail it.
   ci-required:
     if: always()
-    needs: [policy, commitlint, markdown]
+    needs: [policy, commitlint, markdown, security]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
