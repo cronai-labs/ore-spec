@@ -8,6 +8,7 @@ All notable changes to the Ore format specification are documented in this file.
 
 - **spec:** Appendix B names the VaultOre versions with the string-literal deviation ([#6](https://github.com/cronai-labs/ore-spec/pull/6))
 - **spec:** Appendix B names VaultOre 0.1.3 as the fix for the string-literal deviation ([#8](https://github.com/cronai-labs/ore-spec/pull/8))
+
 ## [0.1.0] - 2026-10-18
 
 ### Specification
