@@ -183,14 +183,16 @@ Attributes follow the type on the opening fence line, separated by spaces or tab
 
 | Attribute | Cells | Meaning |
 |---|---|---|
-| `id` | all | **Required.** Unique within the note. Letters, digits, `_` and `-` only: other characters cannot be referenced as `{{id}}` |
+| `id` | all | **Required.** Unique within the note. The letters `A` to `Z` and `a` to `z`, digits, `_` and `-` only: an id is referenced as `{{id}}` (§6) and names the cell's output files (§9.2). `run` is reserved |
 | `depends` | all | Ids of cells that must succeed before this one (§8) |
 | `timeout` | `ts`, `shell` | Seconds, written as digits with an optional decimal fraction (`30`, `0.5`) and greater than zero; overrides `runtime.timeout`. Ignored on an `ai` cell |
 | `model` | `ai` | Model identifier |
 | `temperature` | `ai` | Number |
 | `maxTokens` | `ai` | Integer; `max_tokens` is accepted as a synonym |
 
-A missing or duplicate `id`, a `depends` entry naming no cell of the note, or a dependency cycle MUST fail the run before any cell runs. A dependency cycle is a cell that depends on itself, directly or through other cells.
+A missing or duplicate `id`, an `id` with any other character, a `depends` entry naming no cell of the note, or a dependency cycle MUST fail the run before any cell runs. A dependency cycle is a cell that depends on itself, directly or through other cells.
+
+Two more ids MUST fail the run before any cell runs: an `id` that is `run` in any letter case, which would name the run's own record (§9.2), and an `id` that differs from another cell's only in letter case, since the two are one file on a file system that ignores case. Ids are otherwise compared exactly: `depends=[Fetch]` does not name a cell `fetch`.
 
 A `timeout` on a `ts` or `shell` cell that is not written as above, or a `runtime.timeout` that is not a number greater than zero (§3.3), MUST fail the run before any cell runs. This version has no value that means "no time limit": every container cell runs under one.
 
@@ -284,7 +286,7 @@ A failed cell adds `> error: <message>`. A runner reading a note SHOULD also acc
 
 ### 9.2 Files
 
-`<outputRoot>` is the runner's output folder, `_vaultore` by default. `<workflow>` is the note's path without `.md`. `<runId>` is unique per run; the reference implementation uses the start time with `:` and `.` replaced by `-`, plus six random characters. In file names, every character of `<cellId>` other than letters, digits, `_` and `-` is replaced by `_`.
+`<outputRoot>` is the runner's output folder, `_vaultore` by default. `<workflow>` is the note's path without `.md`. `<runId>` is unique per run; the reference implementation uses the start time with `:` and `.` replaced by `-`, plus six random characters. `<cellId>` is the cell's `id` as written; §5.3 keeps it to characters that are safe in a file name and keeps it apart from `run.json`.
 
 | File | Content |
 |---|---|
@@ -301,6 +303,7 @@ A run MUST fail before any cell runs when:
 
 - the note has no front matter, the front matter is not valid YAML, or a known key has the wrong type (§3);
 - a cell has no `id`, two cells share one, or `depends` names an unknown cell (§5.3);
+- an `id` has a character other than letters, digits, `_` and `-`, is `run` in any letter case, or differs from another cell's `id` only in letter case (§5.3);
 - the `depends` lists form a cycle, including a cell that names itself (§5.3);
 - `runtime.timeout` (§3.3), or the `timeout` of a `ts` or `shell` cell (§5.3), is not a number greater than zero.
 
@@ -344,6 +347,8 @@ frontmatter  = "---" newline yaml newline "---" ;
 body         = { text | cell | callout } ;
 cell         = "```ore:" type attributes newline content "```" ;
 callout      = "> [!ore-output] " cellId newline { "> " text newline } ;
+cellId       = idChar , { idChar } ;
+idChar       = "A"…"Z" | "a"…"z" | "0"…"9" | "_" | "-" ;
 type         = "ts" | "shell" | "ai" | "py" | "go" ;
 attributes   = { ( " " | tab ) attribute } ;
 attribute    = key "=" value ;
@@ -363,3 +368,4 @@ Known deviations of VaultOre from this version:
 - Up to VaultOre 0.1.2, a `ore:ts` cell whose last statement is a string literal before any other statement (a directive, such as a cell that is only `"text";`) outputs `undefined` instead of the string (§7.1; [vaultore#158](https://github.com/cronai-labs/vaultore/issues/158)). [VaultOre 0.1.3](https://github.com/cronai-labs/vaultore/releases/tag/0.1.3) fixes it.
 - Up to VaultOre 0.2.0, a dependency cycle is not detected: the cells run in document order, and the run can report `completed` (§10; [vaultore#45](https://github.com/cronai-labs/vaultore/issues/45)). It is fixed on VaultOre's `main` branch ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214)) and not yet released.
 - Up to VaultOre 0.2.0, a cell's `timeout` is not validated: `2m` is read as two seconds, and `abc`, `0`, a negative number or a fraction below one runs the cell with no time limit (§5.3; [vaultore#45](https://github.com/cronai-labs/vaultore/issues/45)). It is fixed on VaultOre's `main` branch ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214)) and not yet released. A `runtime.timeout` of `0` or below still runs container cells with no time limit ([vaultore#210](https://github.com/cronai-labs/vaultore/issues/210)).
+- VaultOre accepts an `id` with other characters and replaces each by `_` in file names. Up to VaultOre 0.2.0 two such ids can share one output file; on VaultOre's `main` branch that fails the run ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214), not yet released). It does not reserve `run` and does not refuse ids that differ only in letter case (§5.3; [vaultore#209](https://github.com/cronai-labs/vaultore/issues/209)).
