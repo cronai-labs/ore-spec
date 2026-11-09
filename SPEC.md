@@ -96,7 +96,7 @@ runtime:
 |---|---|---|---|
 | `runtime.engine` | string | the runner's setting, else `docker` | Container engine for container cells. When set, it overrides the runner's setting; when that engine is unavailable, the run fails and says the note asked for it |
 | `runtime.image` | string | `oven/bun:1-alpine` | Image for every `ore:ts` and `ore:shell` cell. It MUST provide `sh`, and `bun` for `ore:ts` |
-| `runtime.timeout` | number | `60` | Seconds a container cell may run: a number greater than zero, fractions allowed. A cell's `timeout` attribute overrides it |
+| `runtime.timeout` | number | `60` | Seconds a container cell may run: a finite number greater than zero, fractions allowed. Any other value MUST fail the run before any cell runs. A cell's `timeout` attribute overrides it |
 | `runtime.memoryLimit` | string | `"512m"` | Memory limit of a container cell |
 | `runtime.cpuLimit` | number | `1` | CPU limit of a container cell |
 
@@ -185,16 +185,16 @@ Attributes follow the type on the opening fence line, separated by spaces or tab
 |---|---|---|
 | `id` | all | **Required.** Unique within the note. The letters `A` to `Z` and `a` to `z`, digits, `_` and `-` only: an id is referenced as `{{id}}` (§6) and names the cell's output files (§9.2). `run` is reserved |
 | `depends` | all | Ids of cells that must succeed before this one (§8) |
-| `timeout` | `ts`, `shell` | Seconds, written as digits with an optional decimal fraction (`30`, `0.5`) and greater than zero; overrides `runtime.timeout`. Ignored on an `ai` cell |
+| `timeout` | `ts`, `shell` | Seconds, greater than zero, written as one or more digits `0`-`9`, optionally followed by `.` and one or more digits (`30`, `1.5`): no sign, exponent or unit. Overrides `runtime.timeout`. On an `ai` cell it has no effect in this version |
 | `model` | `ai` | Model identifier |
 | `temperature` | `ai` | Number |
 | `maxTokens` | `ai` | Integer; `max_tokens` is accepted as a synonym |
 
-A missing or duplicate `id`, an `id` with any other character, a `depends` entry naming no cell of the note, or a dependency cycle MUST fail the run before any cell runs. A dependency cycle is a cell that depends on itself, directly or through other cells.
+A missing, empty or duplicate `id`, an `id` with any other character, a `depends` entry naming no cell of the note, or a dependency cycle MUST fail the run before any cell runs. There is a dependency cycle when a cell depends on itself, directly or through other cells.
 
 Two more ids MUST fail the run before any cell runs: an `id` that is `run` in any letter case, which would name the run's own record (§9.2), and an `id` that differs from another cell's only in letter case, since the two are one file on a file system that ignores case. Ids are otherwise compared exactly: `depends=[Fetch]` does not name a cell `fetch`.
 
-A `timeout` on a `ts` or `shell` cell that is not written as above, or a `runtime.timeout` that is not a number greater than zero (§3.3), MUST fail the run before any cell runs. This version has no value that means "no time limit": every container cell runs under one.
+A `timeout` on a `ts` or `shell` cell that is not written as the table says MUST fail the run before any cell runs, as a `runtime.timeout` outside its range does (§3.3). A runner MUST NOT read such a value leniently: `2m` is not two seconds. This version has no value that means "no time limit": every container cell runs under one.
 
 ## 6. Templates
 
@@ -264,7 +264,7 @@ AI cells do not run in a container: the runner calls the provider. What a provid
 - **A cell runs only when every cell it depends on succeeded.** Otherwise it fails and names the dependency.
 - **A failing cell does not stop the run.** Later cells still run; cells that depend on it fail as above.
 - **Running one cell** runs it and, transitively, the cells it depends on. A runner MAY offer to run one cell alone, with its dependencies' last recorded outputs.
-- **A run does not start** when the front matter or a cell does not parse, or when a needed container engine is unavailable.
+- **A run does not start** when validation fails (§10), or when a needed container engine is unavailable. Validation covers the whole note, also when one cell is run: an invalid cell fails a run of any other.
 - **One run per workflow at a time.** A runner MUST NOT start a second run of a workflow while one is running.
 
 ## 9. Outputs
@@ -302,10 +302,10 @@ The `.md` output note SHOULD be an [Open Knowledge Format](https://github.com/Go
 A run MUST fail before any cell runs when:
 
 - the note has no front matter, the front matter is not valid YAML, or a known key has the wrong type (§3);
-- a cell has no `id`, two cells share one, or `depends` names an unknown cell (§5.3);
-- an `id` has a character other than letters, digits, `_` and `-`, is `run` in any letter case, or differs from another cell's `id` only in letter case (§5.3);
+- a cell has no `id` or an empty one, two cells share one, or `depends` names an unknown cell (§5.3);
+- an `id` has a character §5.3 does not allow, is `run` in any letter case, or differs from another cell's `id` only in letter case (§5.3);
 - the `depends` lists form a cycle, including a cell that names itself (§5.3);
-- `runtime.timeout` (§3.3), or the `timeout` of a `ts` or `shell` cell (§5.3), is not a number greater than zero.
+- `runtime.timeout` is not a finite number greater than zero (§3.3), or the `timeout` of a `ts` or `shell` cell is not written as §5.3 requires.
 
 Not validated in this version: unknown front matter keys and cell attributes (ignored), whether `{{cellId}}` names an upstream cell.
 

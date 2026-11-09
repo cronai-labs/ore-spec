@@ -56,10 +56,10 @@ cell("summary")
 
 ### Cells (§5, §7)
 
-- Every cell needs an `id`, unique in the note, made of the letters `A`-`Z` and `a`-`z`, digits, `_` and `-`. Do not name a cell `run`, and do not use two ids that differ only in upper and lower case: each fails the run. A cell that uses another cell's output names it in `depends=[a, b]`. Dependencies must not form a circle: a cell that depends on itself, directly or through others, fails the whole run before any cell runs.
+- Every cell needs an `id`, unique in the note, made of the letters `A`-`Z` and `a`-`z`, digits, `_` and `-`. Do not name a cell `run`, and do not use two ids that differ only in upper and lower case: each fails the run. A cell that uses another cell's output names it in `depends=[a, b]`. Dependencies must not form a cycle: a cell that depends on itself, directly or through others, fails the whole run before any cell runs.
 - `ore:ts`: TypeScript under Bun, in a container, with the vault at `/workspace`. The output is the value of the **last top-level expression statement**, serialised as JSON; a cell that ends in a declaration outputs `undefined`. End with an expression (`result;`). Read other cells with `cell("id")`, notes with `vault.read(path)`, and write notes with `vault.write(path, content)` (needs `vaultWrite`).
 - `ore:shell`: `sh -lc` in the same image; the output is stdout.
-- A container cell runs for at most `runtime.timeout` seconds (default 60); `timeout=120` on the cell overrides it. Write a plain number greater than zero: `2m` or `0` fails the run, and there is no way to switch the limit off.
+- A container cell runs for at most `runtime.timeout` seconds (default 60); `timeout=120` on the cell overrides it. Write a plain number greater than zero, in digits (`120`, `1.5`): `2m`, `0` or `1e3` fails the run, and there is no way to switch the limit off. On an `ore:ai` cell `timeout` does nothing.
 - `ore:ai`: one prompt to the configured provider; the output is the response text, unparsed. Parse it in a later `ore:ts` cell (`JSON.parse(cell("id"))`) if you asked for JSON. Attributes: `model`, `temperature`, `maxTokens`.
 - `ore:py` and `ore:go` are reserved: they fail in 0.1.
 
