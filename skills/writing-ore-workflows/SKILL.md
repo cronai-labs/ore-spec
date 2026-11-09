@@ -59,6 +59,7 @@ cell("summary")
 - Every cell needs an `id`, unique in the note, made of letters, digits, `_` and `-`. A cell that uses another cell's output names it in `depends=[a, b]`. Dependencies must not form a circle: a cell that depends on itself, directly or through others, fails the whole run before any cell runs.
 - `ore:ts`: TypeScript under Bun, in a container, with the vault at `/workspace`. The output is the value of the **last top-level expression statement**, serialised as JSON; a cell that ends in a declaration outputs `undefined`. End with an expression (`result;`). Read other cells with `cell("id")`, notes with `vault.read(path)`, and write notes with `vault.write(path, content)` (needs `vaultWrite`).
 - `ore:shell`: `sh -lc` in the same image; the output is stdout.
+- A container cell runs for at most `runtime.timeout` seconds (default 60); `timeout=120` on the cell overrides it. Write a plain number greater than zero: `2m` or `0` fails the run, and there is no way to switch the limit off.
 - `ore:ai`: one prompt to the configured provider; the output is the response text, unparsed. Parse it in a later `ore:ts` cell (`JSON.parse(cell("id"))`) if you asked for JSON. Attributes: `model`, `temperature`, `maxTokens`.
 - `ore:py` and `ore:go` are reserved: they fail in 0.1.
 

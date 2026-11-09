@@ -96,7 +96,7 @@ runtime:
 |---|---|---|---|
 | `runtime.engine` | string | the runner's setting, else `docker` | Container engine for container cells. When set, it overrides the runner's setting; when that engine is unavailable, the run fails and says the note asked for it |
 | `runtime.image` | string | `oven/bun:1-alpine` | Image for every `ore:ts` and `ore:shell` cell. It MUST provide `sh`, and `bun` for `ore:ts` |
-| `runtime.timeout` | number | `60` | Seconds a container cell may run; a cell's `timeout` attribute overrides it |
+| `runtime.timeout` | number | `60` | Seconds a container cell may run: a number greater than zero, fractions allowed. A cell's `timeout` attribute overrides it |
 | `runtime.memoryLimit` | string | `"512m"` | Memory limit of a container cell |
 | `runtime.cpuLimit` | number | `1` | CPU limit of a container cell |
 
@@ -185,12 +185,14 @@ Attributes follow the type on the opening fence line, separated by spaces or tab
 |---|---|---|
 | `id` | all | **Required.** Unique within the note. Letters, digits, `_` and `-` only: other characters cannot be referenced as `{{id}}` |
 | `depends` | all | Ids of cells that must succeed before this one (§8) |
-| `timeout` | `ts`, `shell` | Seconds; overrides `runtime.timeout` |
+| `timeout` | `ts`, `shell` | Seconds, written as digits with an optional decimal fraction (`30`, `0.5`) and greater than zero; overrides `runtime.timeout`. Ignored on an `ai` cell |
 | `model` | `ai` | Model identifier |
 | `temperature` | `ai` | Number |
 | `maxTokens` | `ai` | Integer; `max_tokens` is accepted as a synonym |
 
 A missing or duplicate `id`, a `depends` entry naming no cell of the note, or a dependency cycle MUST fail the run before any cell runs. A dependency cycle is a cell that depends on itself, directly or through other cells.
+
+A `timeout` on a `ts` or `shell` cell that is not written as above, or a `runtime.timeout` that is not a number greater than zero (§3.3), MUST fail the run before any cell runs. This version has no value that means "no time limit": every container cell runs under one.
 
 ## 6. Templates
 
@@ -299,7 +301,8 @@ A run MUST fail before any cell runs when:
 
 - the note has no front matter, the front matter is not valid YAML, or a known key has the wrong type (§3);
 - a cell has no `id`, two cells share one, or `depends` names an unknown cell (§5.3);
-- the `depends` lists form a cycle, including a cell that names itself (§5.3).
+- the `depends` lists form a cycle, including a cell that names itself (§5.3);
+- `runtime.timeout` (§3.3), or the `timeout` of a `ts` or `shell` cell (§5.3), is not a number greater than zero.
 
 Not validated in this version: unknown front matter keys and cell attributes (ignored), whether `{{cellId}}` names an upstream cell.
 
@@ -359,3 +362,4 @@ Known deviations of VaultOre from this version:
 
 - Up to VaultOre 0.1.2, a `ore:ts` cell whose last statement is a string literal before any other statement (a directive, such as a cell that is only `"text";`) outputs `undefined` instead of the string (§7.1; [vaultore#158](https://github.com/cronai-labs/vaultore/issues/158)). [VaultOre 0.1.3](https://github.com/cronai-labs/vaultore/releases/tag/0.1.3) fixes it.
 - Up to VaultOre 0.2.0, a dependency cycle is not detected: the cells run in document order, and the run can report `completed` (§10; [vaultore#45](https://github.com/cronai-labs/vaultore/issues/45)). It is fixed on VaultOre's `main` branch ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214)) and not yet released.
+- Up to VaultOre 0.2.0, a cell's `timeout` is not validated: `2m` is read as two seconds, and `abc`, `0`, a negative number or a fraction below one runs the cell with no time limit (§5.3; [vaultore#45](https://github.com/cronai-labs/vaultore/issues/45)). It is fixed on VaultOre's `main` branch ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214)) and not yet released. A `runtime.timeout` of `0` or below still runs container cells with no time limit ([vaultore#210](https://github.com/cronai-labs/vaultore/issues/210)).
