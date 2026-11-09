@@ -96,7 +96,7 @@ runtime:
 |---|---|---|---|
 | `runtime.engine` | string | the runner's setting, else `docker` | Container engine for container cells. When set, it overrides the runner's setting; when that engine is unavailable, the run fails and says the note asked for it |
 | `runtime.image` | string | `oven/bun:1-alpine` | Image for every `ore:ts` and `ore:shell` cell. It MUST provide `sh`, and `bun` for `ore:ts` |
-| `runtime.timeout` | number | `60` | Seconds a container cell may run: a finite number greater than zero, fractions allowed. Any other value MUST fail the run before any cell runs. A cell's `timeout` attribute overrides it |
+| `runtime.timeout` | number | `60` | Seconds a container cell may run: a finite number greater than zero and at most `86400` (one day), fractions allowed. Any other value MUST fail the run before any cell runs. A cell's `timeout` attribute overrides it |
 | `runtime.memoryLimit` | string | `"512m"` | Memory limit of a container cell |
 | `runtime.cpuLimit` | number | `1` | CPU limit of a container cell |
 
@@ -183,16 +183,16 @@ Attributes follow the type on the opening fence line, separated by spaces or tab
 
 | Attribute | Cells | Meaning |
 |---|---|---|
-| `id` | all | **Required.** Unique within the note. The letters `A` to `Z` and `a` to `z`, digits, `_` and `-` only: an id is referenced as `{{id}}` (§6) and names the cell's output files (§9.2). `run` is reserved |
+| `id` | all | **Required.** Unique within the note. One to 64 characters from the letters `A` to `Z` and `a` to `z`, digits, `_` and `-`, the first a letter or digit: an id is referenced as `{{id}}` (§6) and names the cell's output files (§9.2). Some ids are reserved, see below |
 | `depends` | all | Ids of cells that must succeed before this one (§8) |
-| `timeout` | `ts`, `shell` | Seconds, greater than zero, written as one or more digits `0`-`9`, optionally followed by `.` and one or more digits (`30`, `1.5`): no sign, exponent or unit. Overrides `runtime.timeout`. On an `ai` cell it has no effect in this version |
+| `timeout` | `ts`, `shell` | Seconds, greater than zero and at most `86400`, written as one or more digits `0`-`9`, optionally followed by `.` and one or more digits (`30`, `1.5`): no sign, exponent or unit. Overrides `runtime.timeout`. On an `ai` cell it has no effect in this version |
 | `model` | `ai` | Model identifier |
 | `temperature` | `ai` | Number |
 | `maxTokens` | `ai` | Integer; `max_tokens` is accepted as a synonym |
 
-A missing, empty or duplicate `id`, an `id` with any other character, a `depends` entry naming no cell of the note, or a dependency cycle MUST fail the run before any cell runs. There is a dependency cycle when a cell depends on itself, directly or through other cells.
+A missing, empty or duplicate `id`, an `id` that is not of the form the table gives, a `depends` entry naming no cell of the note, or a dependency cycle MUST fail the run before any cell runs. There is a dependency cycle when a cell depends on itself, directly or through other cells.
 
-Two more ids MUST fail the run before any cell runs: an `id` that is `run` in any letter case, which would name the run's own record (§9.2), and an `id` that differs from another cell's only in letter case, since the two are one file on a file system that ignores case. Ids are otherwise compared exactly: `depends=[Fetch]` does not name a cell `fetch`.
+A reserved `id` MUST fail the run before any cell runs. Reserved, in any letter case, are `run`, which would name the run's own record (§9.2), and the names Windows keeps for devices, which cannot be file names there: `con`, `prn`, `aux`, `nul`, `com0` to `com9` and `lpt0` to `lpt9`. An `id` that differs from another cell's only in letter case MUST fail the run in the same way, since the two are one file on a file system that ignores case. Ids are otherwise compared exactly: `depends=[Fetch]` does not name a cell `fetch`.
 
 A `timeout` on a `ts` or `shell` cell that is not written as the table says MUST fail the run before any cell runs, as a `runtime.timeout` outside its range does (§3.3). A runner MUST NOT read such a value leniently: `2m` is not two seconds. This version has no value that means "no time limit": every container cell runs under one.
 
@@ -214,6 +214,8 @@ The path in `{{note:…}}` is everything between `note:` and the closing `}}`, u
 ## 7. Cell semantics
 
 Each container cell runs in a fresh container that is removed afterwards. Nothing persists between cells except outputs and files in the vault.
+
+A runner MUST stop a container cell that is still running when its time limit ends (§3.3, §5.3); the cell then fails. The time a runner needs to start the container MAY count against the limit.
 
 ### 7.1 `ore:ts`
 
@@ -286,7 +288,7 @@ A failed cell adds `> error: <message>`. A runner reading a note SHOULD also acc
 
 ### 9.2 Files
 
-`<outputRoot>` is the runner's output folder, `_vaultore` by default. `<workflow>` is the note's path without `.md`. `<runId>` is unique per run; the reference implementation uses the start time with `:` and `.` replaced by `-`, plus six random characters. `<cellId>` is the cell's `id` as written; §5.3 keeps it to characters that are safe in a file name and keeps it apart from `run.json`.
+`<outputRoot>` is the runner's output folder, `_vaultore` by default. `<workflow>` is the note's path without `.md`. `<runId>` is unique per run; the reference implementation uses the start time with `:` and `.` replaced by `-`, plus six random characters. `<cellId>` is the cell's `id` as written; §5.3 keeps it to names that are safe as a file name and keeps it apart from `run.json`. A runner MUST NOT write any other file named `<x>.json` or `<x>.md` into a run's folder when `<x>` could be a cell's `id`; a file it adds there needs a name no id can have, such as one with a second `.`.
 
 | File | Content |
 |---|---|
@@ -303,9 +305,9 @@ A run MUST fail before any cell runs when:
 
 - the note has no front matter, the front matter is not valid YAML, or a known key has the wrong type (§3);
 - a cell has no `id` or an empty one, two cells share one, or `depends` names an unknown cell (§5.3);
-- an `id` has a character §5.3 does not allow, is `run` in any letter case, or differs from another cell's `id` only in letter case (§5.3);
+- an `id` is not of the form §5.3 gives (characters, first character, length), is reserved (`run` or a device name, in any letter case), or differs from another cell's `id` only in letter case (§5.3);
 - the `depends` lists form a cycle, including a cell that names itself (§5.3);
-- `runtime.timeout` is not a finite number greater than zero (§3.3), or the `timeout` of a `ts` or `shell` cell is not written as §5.3 requires.
+- `runtime.timeout` is not a finite number greater than zero and at most `86400` (§3.3), or the `timeout` of a `ts` or `shell` cell is not as §5.3 requires, in form or in range.
 
 Not validated in this version: unknown front matter keys and cell attributes (ignored), whether `{{cellId}}` names an upstream cell.
 
@@ -347,8 +349,9 @@ frontmatter  = "---" newline yaml newline "---" ;
 body         = { text | cell | callout } ;
 cell         = "```ore:" type attributes newline content "```" ;
 callout      = "> [!ore-output] " cellId newline { "> " text newline } ;
-cellId       = idChar , { idChar } ;
-idChar       = "A"…"Z" | "a"…"z" | "0"…"9" | "_" | "-" ;
+cellId       = idStart , { idChar } ;   (* at most 64 characters; reserved ids: §5.3 *)
+idStart      = "A"…"Z" | "a"…"z" | "0"…"9" ;
+idChar       = idStart | "_" | "-" ;
 type         = "ts" | "shell" | "ai" | "py" | "go" ;
 attributes   = { ( " " | tab ) attribute } ;
 attribute    = key "=" value ;
@@ -367,5 +370,5 @@ Known deviations of VaultOre from this version:
 
 - Up to VaultOre 0.1.2, a `ore:ts` cell whose last statement is a string literal before any other statement (a directive, such as a cell that is only `"text";`) outputs `undefined` instead of the string (§7.1; [vaultore#158](https://github.com/cronai-labs/vaultore/issues/158)). [VaultOre 0.1.3](https://github.com/cronai-labs/vaultore/releases/tag/0.1.3) fixes it.
 - Up to VaultOre 0.2.0, a dependency cycle is not detected: the cells run in document order, and the run can report `completed` (§10; [vaultore#45](https://github.com/cronai-labs/vaultore/issues/45)). It is fixed on VaultOre's `main` branch ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214)) and not yet released.
-- Up to VaultOre 0.2.0, a cell's `timeout` is not validated: `2m` is read as two seconds, and `abc`, `0`, a negative number or a fraction below one runs the cell with no time limit (§5.3; [vaultore#45](https://github.com/cronai-labs/vaultore/issues/45)). It is fixed on VaultOre's `main` branch ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214)) and not yet released. A `runtime.timeout` of `0` or below still runs container cells with no time limit ([vaultore#210](https://github.com/cronai-labs/vaultore/issues/210)).
-- VaultOre accepts an `id` with other characters and replaces each by `_` in file names. Up to VaultOre 0.2.0 two such ids can share one output file; on VaultOre's `main` branch that fails the run ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214), not yet released). It does not reserve `run` and does not refuse ids that differ only in letter case (§5.3; [vaultore#209](https://github.com/cronai-labs/vaultore/issues/209)).
+- Up to VaultOre 0.2.0, a cell's `timeout` is not validated: `2m` is read as two seconds, and `abc`, `0`, a negative number or a fraction below one runs the cell with no time limit (§5.3; [vaultore#45](https://github.com/cronai-labs/vaultore/issues/45)). It is fixed on VaultOre's `main` branch ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214)) and not yet released. A `runtime.timeout` of `0` or below still runs container cells with no time limit ([vaultore#210](https://github.com/cronai-labs/vaultore/issues/210)). VaultOre accepts a time limit above `86400`, and above 2 147 483 seconds it stops the cell at once ([vaultore#222](https://github.com/cronai-labs/vaultore/issues/222)).
+- VaultOre accepts an `id` with other characters and replaces each by `_` in file names. Up to VaultOre 0.2.0 two such ids can share one output file; on VaultOre's `main` branch that fails the run ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214), not yet released). It does not check an id's length or first character, does not reserve `run` or the device names, and does not refuse ids that differ only in letter case (§5.3; [vaultore#209](https://github.com/cronai-labs/vaultore/issues/209)).
