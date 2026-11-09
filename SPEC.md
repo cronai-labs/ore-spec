@@ -185,7 +185,7 @@ Attributes follow the type on the opening fence line, separated by spaces or tab
 |---|---|---|
 | `id` | all | **Required.** Unique within the note. One to 64 characters from the letters `A` to `Z` and `a` to `z`, digits, `_` and `-`, the first a letter or digit: an id is referenced as `{{id}}` (§6) and names the cell's output files (§9.2). Some ids are reserved, see below |
 | `depends` | all | Ids of cells that must succeed before this one (§8) |
-| `timeout` | `ts`, `shell` | Seconds, greater than zero and at most `86400`, written as one or more digits `0`-`9`, optionally followed by `.` and one or more digits (`30`, `1.5`): no sign, exponent or unit. Overrides `runtime.timeout`. On an `ai` cell it has no effect in this version |
+| `timeout` | `ts`, `shell` | Seconds, greater than zero and at most `86400`, written as one or more digits `0`-`9`, optionally followed by `.` and one or more digits (`30`, `1.5`): no sign, exponent or unit. Overrides `runtime.timeout`. On an `ai` cell it has no effect in this version; a meaning there is reserved (§12) |
 | `model` | `ai` | Model identifier |
 | `temperature` | `ai` | Number |
 | `maxTokens` | `ai` | Integer; `max_tokens` is accepted as a synonym |
@@ -334,7 +334,7 @@ Reserved for future versions. A runner MUST NOT give these names another meaning
 
 - **Conditions:** `runIf` in front matter and `when=` on a cell, possibly evaluated by an AI provider as `{{ai: …}}`.
 - **Templates:** `{{block:Note#^blockId}}`, `{{meta:date}}`, `{{meta:vault}}`, `{{cell.field}}` for a field of a structured output, and note references whose path comes from another cell.
-- **Cell attributes:** `env`, `retry`, `continueOnError`.
+- **Cell attributes:** `env`, `retry`, `continueOnError`; `timeout` on an `ai` cell, as a limit for its request.
 - **Execution:** parallel cells within resource budgets; a `control:` key with `parallel`, `sequential` and `loop` (`until`, `max`).
 - **AI cells:** `defaultModel` in front matter; structured (JSON) outputs.
 - **Cell types:** `ore:py` (Python 3) and `ore:go` (compiled Go), with `buildNetwork` for their dependency downloads.
