@@ -63,7 +63,7 @@ A note is a workflow when its front matter parses as YAML and its `ore` key is t
 
 ## 3. Front matter
 
-A runner MUST validate the known keys below. A known key with a value of the wrong type MUST fail the run before any cell runs. In this version a runner ignores unknown keys; it MUST still treat them as part of the note's content for permission decisions (§4.3).
+A runner MUST validate the known keys below. A known key with a value of the wrong type, or a workflow without the required `name` (§3.1), MUST fail the run before any cell runs. In this version a runner ignores unknown keys; it MUST still treat them as part of the note's content for permission decisions (§4.3).
 
 ### 3.1 Required keys
 
@@ -228,7 +228,7 @@ The runner provides these globals:
 
 | Global | Meaning |
 |---|---|
-| `cell(id)` | The output value of cell `id`: from this run, or its last recorded output if it did not run. Throws if there is none. Name the cell in `depends` so this cell waits for it |
+| `cell(id)` | The output value of cell `id`: from this run, or its last recorded output if it has not run in this run. Throws if there is none. Name an earlier cell in `depends` so this cell waits for it. A cell that reads its own output, or that of a cell which runs later, gets the value an earlier run recorded; `depends` cannot order those (§5.3) |
 | `vault.read(path)` | The content of a vault note, or this cell's pending write to it. Needs `vaultRead` |
 | `vault.exists(path)` | Whether the note exists, including this cell's pending writes. Needs `vaultRead` |
 | `vault.write(path, content)` | Records a write; the runner applies it after the cell (below). Needs `vaultWrite`; without `vaultRead`, only inside the run's directory |
@@ -262,7 +262,7 @@ AI cells do not run in a container: the runner calls the provider. What a provid
 
 ## 8. Execution order
 
-- Cells run **one at a time**. First every cell without dependencies, in document order; then each cell once all of its dependencies have run.
+- Cells run **one at a time**, in the order of a queue. The queue starts with every cell without dependencies, in document order. Each time a cell has had its turn, whether it ran or failed, the cells whose dependencies have now all had theirs join the end of the queue, in document order. For `a`, `b depends=[a]`, `c`, `d depends=[a]` that is `a`, `c`, `b`, `d`.
 - **A cell runs only when every cell it depends on succeeded.** Otherwise it fails and names the dependency.
 - **A failing cell does not stop the run.** Later cells still run; cells that depend on it fail as above.
 - **Running one cell** runs it and, transitively, the cells it depends on. A runner MAY offer to run one cell alone, with its dependencies' last recorded outputs.
@@ -303,7 +303,7 @@ The `.md` output note SHOULD be an [Open Knowledge Format](https://github.com/Go
 
 A run MUST fail before any cell runs when:
 
-- the note has no front matter, the front matter is not valid YAML, or a known key has the wrong type (§3);
+- the note has no front matter, the front matter is not valid YAML, the required key `name` is missing, or a known key has the wrong type (§3);
 - a cell has no `id` or an empty one, two cells share one, or `depends` names an unknown cell (§5.3);
 - an `id` is not of the form §5.3 gives (characters, first character, length), is reserved (`run` or a device name, in any letter case), or differs from another cell's `id` only in letter case (§5.3);
 - the `depends` lists form a cycle, including a cell that names itself (§5.3);
