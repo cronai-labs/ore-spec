@@ -97,8 +97,10 @@ runtime:
 | `runtime.engine` | string | the runner's setting, else `docker` | Container engine for container cells. When set, it overrides the runner's setting; when that engine is unavailable, the run fails and says the note asked for it |
 | `runtime.image` | string | `oven/bun:1-alpine` | Image for every `ore:ts` and `ore:shell` cell. It MUST provide `sh`, and `bun` for `ore:ts` |
 | `runtime.timeout` | number | `60` | Seconds a container cell may run: a finite number greater than zero and at most `86400` (one day), fractions allowed. Any other value MUST fail the run before any cell runs. A cell's `timeout` attribute overrides it |
-| `runtime.memoryLimit` | string | `"512m"` | Memory limit of a container cell |
-| `runtime.cpuLimit` | number | `1` | CPU limit of a container cell |
+| `runtime.memoryLimit` | string | `"512m"` | Memory limit of a container cell: an amount greater than zero, written as a number with an optional unit as the container engine reads it (`512m`, `2g`). An empty value or an amount of zero MUST fail the run before any cell runs |
+| `runtime.cpuLimit` | number | `1` | CPU limit of a container cell: a finite number greater than zero, fractions allowed. Any other value MUST fail the run before any cell runs |
+
+This version has no value that means "no limit" for the time, the memory or the CPU of a container cell: a container engine may read a limit of `0` as none (Docker does, for memory and CPU), which is why a runner MUST refuse it and not pass it on.
 
 ### 3.4 Permissions
 
@@ -307,7 +309,8 @@ A run MUST fail before any cell runs when:
 - a cell has no `id` or an empty one, two cells share one, or `depends` names an unknown cell (§5.3);
 - an `id` is not of the form §5.3 gives (characters, first character, length), is reserved (`run` or a device name, in any letter case), or differs from another cell's `id` only in letter case (§5.3);
 - the `depends` lists form a cycle, including a cell that names itself (§5.3);
-- `runtime.timeout` is not a finite number greater than zero and at most `86400` (§3.3), or the `timeout` of a `ts` or `shell` cell is not as §5.3 requires, in form or in range.
+- `runtime.timeout` is not a finite number greater than zero and at most `86400` (§3.3), or the `timeout` of a `ts` or `shell` cell is not as §5.3 requires, in form or in range;
+- `runtime.cpuLimit` is not a finite number greater than zero, or `runtime.memoryLimit` is empty or an amount of zero (§3.3).
 
 Not validated in this version: unknown front matter keys and cell attributes (ignored), whether `{{cellId}}` names an upstream cell.
 
@@ -370,5 +373,5 @@ Known deviations of VaultOre from this version:
 
 - Up to VaultOre 0.1.2, a `ore:ts` cell whose last statement is a string literal before any other statement (a directive, such as a cell that is only `"text";`) outputs `undefined` instead of the string (§7.1; [vaultore#158](https://github.com/cronai-labs/vaultore/issues/158)). [VaultOre 0.1.3](https://github.com/cronai-labs/vaultore/releases/tag/0.1.3) fixes it.
 - Up to VaultOre 0.2.0, a dependency cycle is not detected: the cells run in document order, and the run can report `completed` (§10; [vaultore#45](https://github.com/cronai-labs/vaultore/issues/45)). It is fixed on VaultOre's `main` branch ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214)) and not yet released.
-- Up to VaultOre 0.2.0, a cell's `timeout` is not validated: `2m` is read as two seconds, and `abc`, `0`, a negative number or a fraction below one runs the cell with no time limit (§5.3; [vaultore#45](https://github.com/cronai-labs/vaultore/issues/45)). It is fixed on VaultOre's `main` branch ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214)) and not yet released. A `runtime.timeout` of `0` or below still runs container cells with no time limit ([vaultore#210](https://github.com/cronai-labs/vaultore/issues/210)). VaultOre accepts a time limit above `86400`, and above 2 147 483 seconds it stops the cell at once ([vaultore#222](https://github.com/cronai-labs/vaultore/issues/222)).
+- Up to VaultOre 0.2.0, a cell's `timeout` is not validated: `2m` is read as two seconds, and `abc`, `0`, a negative number or a fraction below one runs the cell with no time limit (§5.3; [vaultore#45](https://github.com/cronai-labs/vaultore/issues/45)). It is fixed on VaultOre's `main` branch ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214)) and not yet released. A `runtime.timeout` of `0` or below still runs container cells with no time limit ([vaultore#210](https://github.com/cronai-labs/vaultore/issues/210)). VaultOre accepts a time limit above `86400`, and above 2 147 483 seconds it stops the cell at once ([vaultore#222](https://github.com/cronai-labs/vaultore/issues/222)). Up to VaultOre 0.2.0, a `runtime.cpuLimit` of `0` and an empty `runtime.memoryLimit` run container cells without that limit (same issue).
 - VaultOre accepts an `id` with other characters and replaces each by `_` in file names. Up to VaultOre 0.2.0 two such ids can share one output file; on VaultOre's `main` branch that fails the run ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214), not yet released). It does not check an id's length or first character, does not reserve `run` or the device names, and does not refuse ids that differ only in letter case (§5.3; [vaultore#209](https://github.com/cronai-labs/vaultore/issues/209)).
