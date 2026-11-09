@@ -190,7 +190,7 @@ Attributes follow the type on the opening fence line, separated by spaces or tab
 | `temperature` | `ai` | Number |
 | `maxTokens` | `ai` | Integer; `max_tokens` is accepted as a synonym |
 
-A missing or duplicate `id`, or a `depends` entry naming no cell of the note, MUST fail the run before any cell runs.
+A missing or duplicate `id`, a `depends` entry naming no cell of the note, or a dependency cycle MUST fail the run before any cell runs. A dependency cycle is a cell that depends on itself, directly or through other cells.
 
 ## 6. Templates
 
@@ -298,9 +298,10 @@ The `.md` output note SHOULD be an [Open Knowledge Format](https://github.com/Go
 A run MUST fail before any cell runs when:
 
 - the note has no front matter, the front matter is not valid YAML, or a known key has the wrong type (§3);
-- a cell has no `id`, two cells share one, or `depends` names an unknown cell (§5.3).
+- a cell has no `id`, two cells share one, or `depends` names an unknown cell (§5.3);
+- the `depends` lists form a cycle, including a cell that names itself (§5.3).
 
-Not validated in this version: unknown front matter keys and cell attributes (ignored), dependency cycles (§12), whether `{{cellId}}` names an upstream cell.
+Not validated in this version: unknown front matter keys and cell attributes (ignored), whether `{{cellId}}` names an upstream cell.
 
 ## 11. Versioning and conformance
 
@@ -326,7 +327,7 @@ Reserved for future versions. A runner MUST NOT give these names another meaning
 - **Conditions:** `runIf` in front matter and `when=` on a cell, possibly evaluated by an AI provider as `{{ai: …}}`.
 - **Templates:** `{{block:Note#^blockId}}`, `{{meta:date}}`, `{{meta:vault}}`, `{{cell.field}}` for a field of a structured output, and note references whose path comes from another cell.
 - **Cell attributes:** `env`, `retry`, `continueOnError`.
-- **Execution:** dependency cycles as a validation error; parallel cells within resource budgets; a `control:` key with `parallel`, `sequential` and `loop` (`until`, `max`).
+- **Execution:** parallel cells within resource budgets; a `control:` key with `parallel`, `sequential` and `loop` (`until`, `max`).
 - **AI cells:** `defaultModel` in front matter; structured (JSON) outputs.
 - **Cell types:** `ore:py` (Python 3) and `ore:go` (compiled Go), with `buildNetwork` for their dependency downloads.
 - **Format version:** a front matter key naming the version of this specification a workflow targets.
@@ -357,3 +358,4 @@ value        = '"' { anyButDoubleQuote } '"'
 Known deviations of VaultOre from this version:
 
 - Up to VaultOre 0.1.2, a `ore:ts` cell whose last statement is a string literal before any other statement (a directive, such as a cell that is only `"text";`) outputs `undefined` instead of the string (§7.1; [vaultore#158](https://github.com/cronai-labs/vaultore/issues/158)). [VaultOre 0.1.3](https://github.com/cronai-labs/vaultore/releases/tag/0.1.3) fixes it.
+- Up to VaultOre 0.2.0, a dependency cycle is not detected: the cells run in document order, and the run can report `completed` (§10; [vaultore#45](https://github.com/cronai-labs/vaultore/issues/45)). It is fixed on VaultOre's `main` branch ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214)) and not yet released.
