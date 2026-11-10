@@ -1,10 +1,10 @@
 # The Ore Format
 
-**Version:** 0.1.1
+**Version:** 0.2.0
 
 **Status:** Draft
 
-**Date:** 2026-10-19
+**Date:** 2026-11-11
 
 **Editor:** Tobias Krug, CronAI UG
 
@@ -12,7 +12,7 @@
 
 **First published:** 2026-01-18, as `specs/workflow-note-spec.md` in [cronai-labs/vaultore](https://github.com/cronai-labs/vaultore) (commit `398417b`)
 
-**Reference implementation:** [VaultOre](https://github.com/cronai-labs/vaultore) 0.1.x
+**Reference implementation:** [VaultOre](https://github.com/cronai-labs/vaultore) 0.3.0 (Appendix B)
 
 ## Abstract
 
@@ -20,7 +20,7 @@ Ore is a format for executable notes. An Ore workflow is a Markdown note whose f
 
 ## Status of this document
 
-This is a draft. It describes the format as the reference implementation, VaultOre 0.1.x, reads and runs it. Until 1.0 a minor version may change the format incompatibly; §11 states what 1.0 requires. Features that are reserved but not yet specified are listed in §12.
+This is a draft. It describes the format as the reference implementation, VaultOre 0.3.0, reads and runs it; Appendix B says where earlier releases differ. Until 1.0 a minor version may change the format incompatibly; §11 states what 1.0 requires. Features that are reserved but not yet specified are listed in §12.
 
 ## 1. Conventions
 
@@ -318,7 +318,7 @@ Not validated in this version: unknown front matter keys and cell attributes (ig
 
 **Versions.** This specification is versioned with Semantic Versioning. Before 1.0, a minor version MAY change the format incompatibly; its changelog says how. From 1.0 on, an incompatible change needs a new major version. A workflow does not yet declare which version of the format it was written for (§12).
 
-**Conformance.** A runner conforms to Ore 0.1 when it:
+**Conformance.** A runner conforms to Ore 0.2 when it:
 
 1. treats exactly the notes of §2 as workflows;
 2. validates as in §3, §5.3 and §10;
@@ -369,9 +369,12 @@ value        = '"' { anyButDoubleQuote } '"'
 
 [VaultOre](https://github.com/cronai-labs/vaultore) implements this version: an Obsidian plugin and a command-line runner, in [Obsidian's community plugins](https://community.obsidian.md/plugins/vaultore) since 2026-10-18. Its own specifications go into detail this document leaves to runners: the container flags, the stored permission decisions, the providers' request formats.
 
-Known deviations of VaultOre from this version:
+No deviation of VaultOre 0.3.0 from this version is known. Earlier releases deviate:
 
 - Up to VaultOre 0.1.2, a `ore:ts` cell whose last statement is a string literal before any other statement (a directive, such as a cell that is only `"text";`) outputs `undefined` instead of the string (§7.1; [vaultore#158](https://github.com/cronai-labs/vaultore/issues/158)). [VaultOre 0.1.3](https://github.com/cronai-labs/vaultore/releases/tag/0.1.3) fixes it.
-- Up to VaultOre 0.2.0, a dependency cycle is not detected: the cells run in document order, and the run can report `completed` (§10; [vaultore#45](https://github.com/cronai-labs/vaultore/issues/45)). It is fixed on VaultOre's `main` branch ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214)) and not yet released.
-- Up to VaultOre 0.2.0, a cell's `timeout` is not validated: `2m` is read as two seconds, and `abc`, `0`, a negative number or a fraction below one runs the cell with no time limit (§5.3; [vaultore#45](https://github.com/cronai-labs/vaultore/issues/45)). It is fixed on VaultOre's `main` branch ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214)) and not yet released. A `runtime.timeout` of `0` or below still runs container cells with no time limit ([vaultore#210](https://github.com/cronai-labs/vaultore/issues/210)). VaultOre accepts a time limit above `86400`, and above 2 147 483 seconds it stops the cell at once ([vaultore#222](https://github.com/cronai-labs/vaultore/issues/222)). Up to VaultOre 0.2.0, a `runtime.cpuLimit` of `0` and an empty `runtime.memoryLimit` run container cells without that limit (same issue).
-- VaultOre accepts an `id` with other characters and replaces each by `_` in file names. Up to VaultOre 0.2.0 two such ids can share one output file; on VaultOre's `main` branch that fails the run ([vaultore#214](https://github.com/cronai-labs/vaultore/pull/214), not yet released). It does not check an id's length or first character, does not reserve `run` or the device names, and does not refuse ids that differ only in letter case (§5.3; [vaultore#209](https://github.com/cronai-labs/vaultore/issues/209)).
+- Up to VaultOre 0.2.0, a dependency cycle is not detected: the cells run in document order, and the run can report `completed` (§10; [vaultore#45](https://github.com/cronai-labs/vaultore/issues/45)).
+- Up to VaultOre 0.2.0, a time limit is not validated. A cell's `timeout` of `2m` is read as two seconds, and `abc`, `0`, a negative number or a fraction below one runs the cell with no time limit; so does a `runtime.timeout` of `0` or below. A time limit above `86400` is accepted, and above 2 147 483 seconds it stops the cell at once (§3.3, §5.3; [vaultore#45](https://github.com/cronai-labs/vaultore/issues/45), [vaultore#210](https://github.com/cronai-labs/vaultore/issues/210), [vaultore#222](https://github.com/cronai-labs/vaultore/issues/222)).
+- Up to VaultOre 0.2.0, a `runtime.cpuLimit` of `0` and an empty `runtime.memoryLimit` run container cells without that limit (§3.3; [vaultore#222](https://github.com/cronai-labs/vaultore/issues/222)).
+- Up to VaultOre 0.2.0, an `id` is not validated: other characters are accepted and replaced by `_` in file names, so two ids can share one output file; an id's length and first character are not checked, `run` and the device names are not reserved, and ids that differ only in letter case are not refused (§5.3; [vaultore#209](https://github.com/cronai-labs/vaultore/issues/209)).
+
+[VaultOre 0.3.0](https://github.com/cronai-labs/vaultore/releases/tag/0.3.0) fixes the last four; its release notes say what a workflow that ran before has to change.

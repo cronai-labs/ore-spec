@@ -2,7 +2,7 @@
 
 **Ore** is a format for executable notes: Markdown files whose cells run, in order, and write their results back into the note. A workflow is a note with `ore: true` in its front matter and fenced code blocks of type `ore:ts`, `ore:shell` or `ore:ai`. The note declares what its cells may do, so you can read the permissions before anything runs.
 
-This repository holds the specification: **[SPEC.md](SPEC.md)**, version 0.1.1 (draft). An overview for readers new to Ore: [cronai.de/en/ore](https://www.cronai.de/en/ore).
+This repository holds the specification: **[SPEC.md](SPEC.md)**, version 0.2.0 (draft). An overview for readers new to Ore: [cronai.de/en/ore](https://www.cronai.de/en/ore).
 
 ## In one example
 
@@ -48,7 +48,7 @@ Ore was created by Tobias Krug at CronAI UG. The format was first published on 2
 
 | Runner | Kind | Status |
 |---|---|---|
-| [VaultOre](https://github.com/cronai-labs/vaultore) | Obsidian plugin, and a command-line runner built from source | Reference implementation of 0.1, in [Obsidian's community plugins](https://community.obsidian.md/plugins/vaultore). Known deviations: [SPEC.md Appendix B](SPEC.md#appendix-b-reference-implementation) |
+| [VaultOre](https://github.com/cronai-labs/vaultore) | Obsidian plugin, and a command-line runner built from source | Reference implementation: VaultOre 0.3.0 implements 0.2. In [Obsidian's community plugins](https://community.obsidian.md/plugins/vaultore). Deviations of earlier releases: [SPEC.md Appendix B](SPEC.md#appendix-b-reference-implementation) |
 
 ## For agents and tool builders
 
@@ -61,7 +61,7 @@ Ore was created by Tobias Krug at CronAI UG. The format was first published on 2
 
 The specification is licensed under [Creative Commons Attribution 4.0 International](LICENSE) (CC BY 4.0): you may share and adapt it, including for commercial use and for implementations, as long as you give credit. Cite it as given in [CITATION.cff](CITATION.cff), or as:
 
-> Tobias Krug, CronAI UG. *The Ore Format*, version 0.1.1 (draft), 2026. <https://github.com/cronai-labs/ore-spec>
+> Tobias Krug, CronAI UG. *The Ore Format*, version 0.2.0 (draft), 2026. <https://github.com/cronai-labs/ore-spec>
 
 ## Contributing
 
