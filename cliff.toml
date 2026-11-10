@@ -10,11 +10,22 @@ All notable changes to the Ore format specification are documented in this file.
 """
 # `trim` strips every template line and the template's last newline, so the
 # `\n` after the final endfor is what puts a blank line between releases (#12).
+# Breaking changes come first, each with the text of its `BREAKING CHANGE:`
+# footer (the subject when there is none), so a release says what stops being
+# valid (#37). GitHub wraps a squash commit's body, so the footer's lines are
+# joined again.
 body = """
 {% if version -%}
 ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
 {% else -%}
 ## [Unreleased]
+{% endif %}
+{%- set breaking = commits | filter(attribute="breaking", value=true) %}
+{%- if breaking | length > 0 %}
+### Breaking changes
+{% for commit in breaking %}
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.breaking_description | replace_regex(from="\\s+", to=" ") | upper_first }}\
+{% endfor %}
 {% endif %}
 {%- for group, commits in commits | group_by(attribute="group") %}
 ### {{ group | striptags | trim | upper_first }}
