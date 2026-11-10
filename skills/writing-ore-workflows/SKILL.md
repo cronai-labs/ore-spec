@@ -45,7 +45,7 @@ cell("summary")
 
 - `ore: true` must be the boolean, not the string `"true"`. `name` is required.
 - Quote versions: `version: "0.1"`. Unquoted, YAML reads a number, and the run fails.
-- Unknown keys are ignored in 0.1, so a typo (`permission:`) silently does nothing. Check the key names against §3 and §4.
+- Unknown keys are ignored in this version, so a typo (`permission:`) silently does nothing. Check the key names against §3 and §4.
 
 ### Permissions (§4)
 
@@ -61,7 +61,7 @@ cell("summary")
 - `ore:shell`: `sh -lc` in the same image; the output is stdout.
 - A container cell runs for at most `runtime.timeout` seconds (default 60); `timeout=120` on the cell overrides it. Write a plain number greater than zero and at most 86400 (one day), in digits (`120`, `1.5`): `2m`, `0` or `1e3` fails the run, and there is no way to switch the limit off. On an `ore:ai` cell `timeout` does nothing. `runtime.cpuLimit` and `runtime.memoryLimit` cannot be switched off either: `0` or an empty value fails the run.
 - `ore:ai`: one prompt to the configured provider; the output is the response text, unparsed. Parse it in a later `ore:ts` cell (`JSON.parse(cell("id"))`) if you asked for JSON. Attributes: `model`, `temperature`, `maxTokens`.
-- `ore:py` and `ore:go` are reserved: they fail in 0.1.
+- `ore:py` and `ore:go` are reserved: they fail in this version.
 
 ### Templates (§6)
 
@@ -80,7 +80,7 @@ cell("summary")
 
 ## Checking a workflow
 
-There is no validator in 0.1. In Obsidian, open the note and run it with VaultOre. Headless, VaultOre's command-line runner (built from source in [cronai-labs/vaultore](https://github.com/cronai-labs/vaultore)) runs it in a scratch vault; read the callouts and the `.json` records:
+There is no separate validator yet. In Obsidian, open the note and run it with VaultOre. Headless, VaultOre's command-line runner (built from source in [cronai-labs/vaultore](https://github.com/cronai-labs/vaultore)) runs it in a scratch vault; read the callouts and the `.json` records:
 
 ```sh
 vaultore run <workflow>.md --vault <scratch-vault>            # whole workflow

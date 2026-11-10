@@ -1,6 +1,6 @@
 # Ore
 
-> Ore is a format for executable notes: a Markdown note with `ore: true` in its front matter whose fenced code blocks of type `ore:ts`, `ore:shell` or `ore:ai` are cells. A runner executes them in dependency order, enforces the permissions the note declares (network, reading and writing the vault) and writes each output back under its cell. Specification version 0.1.1 (draft), CC BY 4.0. Reference implementation: VaultOre.
+> Ore is a format for executable notes: a Markdown note with `ore: true` in its front matter whose fenced code blocks of type `ore:ts`, `ore:shell` or `ore:ai` are cells. A runner executes them in dependency order, enforces the permissions the note declares (network, reading and writing the vault) and writes each output back under its cell. Specification version 0.2.0 (draft), CC BY 4.0. Reference implementation: VaultOre.
 
 ## Specification
 
