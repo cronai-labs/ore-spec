@@ -13,6 +13,8 @@ Issues are welcome for questions, ambiguities, gaps between the specification an
 
 Pull request titles are [Conventional Commits](https://www.conventionalcommits.org/); the title becomes the squash commit and the changelog entry. Scopes: `spec`, `examples`, `readme`, `ci`, `release`, `deps`. Changes to the specification text are `docs(spec): …`, new features `feat(spec): …`. CI checks the title, the commit messages, Markdown lint and links; `ci-required` must pass.
 
+The pull request description becomes the squash commit's body, and commitlint checks that commit on `main` after the merge, not before. GitHub wraps prose there but not code blocks, so keep every line inside a code block of the description at 100 characters or less, or `main` turns red after a green pull request.
+
 ```sh
 make setup   # npm ci
 make check   # markdownlint and the offline link check (Docker)
